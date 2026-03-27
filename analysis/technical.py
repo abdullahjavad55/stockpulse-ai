@@ -1,16 +1,20 @@
 """
-analysis/technical.py — Technical indicator calculations and scoring.
+analysis/technical.py - Technical indicator calculations and scoring.
 
 Indicators implemented:
-  • SMA  (20 / 50 / 200-day)
-  • EMA  (12 / 26-day)
-  • RSI  (14-day)
-  • MACD (12-26-9)
-  • Bollinger Bands (20-day, 2σ)
-  • Volume analysis (relative volume vs 20-day average)
-  • Support & Resistance levels (rolling window extrema)
+  - SMA  (20 / 50 / 200-day)
+  - EMA  (12 / 26-day)
+  - RSI  (14-day)
+  - MACD (12-26-9)
+  - Bollinger Bands (20-day, 2-sigma)
+  - Volume analysis (relative volume vs 20-day average)
+  - Support & Resistance levels (rolling window extrema)
 
 All score helpers return a float in [0, 100].  Higher = more bullish.
+
+Strategy-aware weights:
+  short_term: RSI 35%, MACD 35%, Trend 15%, BB 10%, Volume 5%, SR 0%
+  long_term:  RSI 10%, MACD 10%, Trend 45%, BB 15%, Volume 15%, SR 5%
 """
 
 import logging
@@ -23,6 +27,26 @@ import config
 
 logger = logging.getLogger(__name__)
 
+# Component weights per strategy
+TECH_WEIGHTS = {
+    "short_term": {
+        "rsi":    0.35,
+        "macd":   0.35,
+        "trend":  0.15,
+        "bb":     0.10,
+        "volume": 0.05,
+        "sr":     0.00,
+    },
+    "long_term": {
+        "rsi":    0.10,
+        "macd":   0.10,
+        "trend":  0.45,
+        "bb":     0.15,
+        "volume": 0.15,
+        "sr":     0.05,
+    },
+}
+
 
 class TechnicalAnalyzer:
     """
@@ -32,21 +56,21 @@ class TechnicalAnalyzer:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    def analyze(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def analyze(self, df: pd.DataFrame, strategy: str = "short_term") -> Dict[str, Any]:
         """
         Run the full technical analysis pipeline.
 
         Parameters
         ----------
-        df : pd.DataFrame
-            OHLCV data with at least columns [Open, High, Low, Close, Volume].
+        df       : pd.DataFrame - OHLCV data with columns [Open, High, Low, Close, Volume].
+        strategy : str - "short_term" or "long_term"; controls internal component weights.
 
         Returns
         -------
         dict with keys:
-          indicators  – all computed series / values
-          score       – Technical Score (0–100)
-          signals     – list of human-readable signal strings
+          indicators  - all computed series / values
+          score       - Technical Score (0-100)
+          signals     - list of human-readable signal strings
         """
         if df is None or len(df) < config.SMA_SHORT + 5:
             return {"indicators": {}, "score": 50.0, "signals": ["Insufficient data"]}
@@ -55,7 +79,10 @@ class TechnicalAnalyzer:
         indicators: Dict[str, Any] = {}
         signals: list = []
 
-        # ── Compute indicators ────────────────────────────────────────────────
+        # Select component weights based on strategy
+        weights = TECH_WEIGHTS.get(strategy, TECH_WEIGHTS["short_term"])
+
+        # Compute indicators
         df = self._add_sma(df, indicators)
         df = self._add_ema(df, indicators)
         df = self._add_rsi(df, indicators)
@@ -64,7 +91,7 @@ class TechnicalAnalyzer:
         self._add_volume_analysis(df, indicators)
         self._add_support_resistance(df, indicators)
 
-        # ── Score each indicator group ────────────────────────────────────────
+        # Score each indicator group
         score_rsi,     sig_rsi     = self._score_rsi(indicators)
         score_macd,    sig_macd    = self._score_macd(indicators)
         score_trend,   sig_trend   = self._score_trend(df, indicators)
@@ -75,15 +102,14 @@ class TechnicalAnalyzer:
         for sig_list in [sig_rsi, sig_macd, sig_trend, sig_bb, sig_vol, sig_sr]:
             signals.extend(sig_list)
 
-        # ── Weighted composite score ──────────────────────────────────────────
-        # Weights reflect typical technical-trading importance
+        # Strategy-aware weighted composite score
         weighted = (
-            score_rsi   * 0.25 +
-            score_macd  * 0.25 +
-            score_trend * 0.20 +
-            score_bb    * 0.15 +
-            score_vol   * 0.10 +
-            score_sr    * 0.05
+            score_rsi   * weights["rsi"]    +
+            score_macd  * weights["macd"]   +
+            score_trend * weights["trend"]  +
+            score_bb    * weights["bb"]     +
+            score_vol   * weights["volume"] +
+            score_sr    * weights["sr"]
         )
         score = float(np.clip(weighted, 0, 100))
 
@@ -95,6 +121,12 @@ class TechnicalAnalyzer:
             "volume": round(score_vol,   2),
             "sr":     round(score_sr,    2),
         }
+
+        logger.info(
+            "[TECHNICAL][%s][window=%dd] RSI=%.1f MACD=%.1f Trend=%.1f BB=%.1f Vol=%.1f SR=%.1f -> Score=%.2f",
+            strategy, len(df),
+            score_rsi, score_macd, score_trend, score_bb, score_vol, score_sr, score,
+        )
 
         return {"indicators": indicators, "score": round(score, 2), "signals": signals}
 
@@ -224,22 +256,22 @@ class TechnicalAnalyzer:
 
         if rsi < 30:
             score = 80.0
-            signals.append(f"RSI = {rsi:.1f} — strongly oversold (bullish reversal potential)")
+            signals.append(f"RSI = {rsi:.1f} - strongly oversold (bullish reversal potential)")
         elif rsi < 40:
             score = 65.0
-            signals.append(f"RSI = {rsi:.1f} — approaching oversold territory")
+            signals.append(f"RSI = {rsi:.1f} - approaching oversold territory")
         elif rsi < 55:
             score = 50.0
-            signals.append(f"RSI = {rsi:.1f} — neutral momentum")
+            signals.append(f"RSI = {rsi:.1f} - neutral momentum")
         elif rsi < 65:
             score = 45.0
-            signals.append(f"RSI = {rsi:.1f} — momentum leaning bullish but watch for overbought")
+            signals.append(f"RSI = {rsi:.1f} - momentum leaning bullish but watch for overbought")
         elif rsi < 70:
             score = 35.0
-            signals.append(f"RSI = {rsi:.1f} — approaching overbought territory")
+            signals.append(f"RSI = {rsi:.1f} - approaching overbought territory")
         else:
             score = 20.0
-            signals.append(f"RSI = {rsi:.1f} — strongly overbought (bearish reversal risk)")
+            signals.append(f"RSI = {rsi:.1f} - strongly overbought (bearish reversal risk)")
 
         return score, signals
 
@@ -257,16 +289,16 @@ class TechnicalAnalyzer:
 
         if bullish_cross:
             score = 80.0
-            signals.append("MACD bullish crossover detected — strong buy signal")
+            signals.append("MACD bullish crossover detected - strong buy signal")
         elif bearish_cross:
             score = 20.0
-            signals.append("MACD bearish crossover detected — strong sell signal")
+            signals.append("MACD bearish crossover detected - strong sell signal")
         elif macd > sig and hist > 0:
             score = 65.0
-            signals.append("MACD above signal line with positive histogram — bullish")
+            signals.append("MACD above signal line with positive histogram - bullish")
         elif macd < sig and hist < 0:
             score = 35.0
-            signals.append("MACD below signal line with negative histogram — bearish")
+            signals.append("MACD below signal line with negative histogram - bearish")
         else:
             score = 50.0
             signals.append("MACD is neutral")
@@ -332,23 +364,23 @@ class TechnicalAnalyzer:
 
         if pct_b < 0.1:
             score = 75.0
-            signals.append("Price near lower Bollinger Band — potential reversal to upside")
+            signals.append("Price near lower Bollinger Band - potential reversal to upside")
         elif pct_b < 0.3:
             score = 60.0
-            signals.append("Price in lower Bollinger Band zone — mildly oversold")
+            signals.append("Price in lower Bollinger Band zone - mildly oversold")
         elif pct_b < 0.7:
             score = 50.0
-            signals.append("Price in Bollinger Band midzone — neutral")
+            signals.append("Price in Bollinger Band midzone - neutral")
         elif pct_b < 0.9:
             score = 40.0
-            signals.append("Price in upper Bollinger Band zone — mildly overbought")
+            signals.append("Price in upper Bollinger Band zone - mildly overbought")
         else:
             score = 25.0
-            signals.append("Price near upper Bollinger Band — potential reversal to downside")
+            signals.append("Price near upper Bollinger Band - potential reversal to downside")
 
         # Band squeeze (low volatility often precedes breakout)
         if bw < 0.05:
-            signals.append("Bollinger Band squeeze detected — breakout may be imminent")
+            signals.append("Bollinger Band squeeze detected - breakout may be imminent")
 
         return score, signals
 
@@ -365,10 +397,10 @@ class TechnicalAnalyzer:
             signals.append(f"High volume ({rel_vol:.1f}x avg) confirming downward price move")
         elif vtrend == "low_volume":
             score = 50.0
-            signals.append("Low volume — current price move lacks conviction")
+            signals.append("Low volume - current price move lacks conviction")
         else:
             score = 50.0
-            signals.append(f"Volume at {rel_vol:.1f}x 20-day average — neutral")
+            signals.append(f"Volume at {rel_vol:.1f}x 20-day average - neutral")
 
         return score, signals
 
@@ -380,10 +412,10 @@ class TechnicalAnalyzer:
         # Closer to support = more bullish (potential bounce); closer to resistance = bearish
         if pct_support < 0.02:
             score = 70.0
-            signals.append(f"Price near support level ${ind['support']:.2f} — potential bounce")
+            signals.append(f"Price near support level ${ind['support']:.2f} - potential bounce")
         elif pct_resistance < 0.02:
             score = 35.0
-            signals.append(f"Price near resistance level ${ind['resistance']:.2f} — may face rejection")
+            signals.append(f"Price near resistance level ${ind['resistance']:.2f} - may face rejection")
         else:
             score = 50.0
             signals.append(

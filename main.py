@@ -1,5 +1,5 @@
 """
-main.py — NASDAQ Trading Analysis Tool
+main.py - NASDAQ Trading Analysis Tool
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Production-grade quantitative analysis combining:
   • Real-time and historical stock price data (yfinance)
@@ -283,7 +283,7 @@ def run_analysis(
     """Run the full scan pipeline and print results."""
     _print_banner(strategy)
 
-    print(f"  Scanning {len(tickers)} tickers — strategy: {strategy}\n")
+    print(f"  Scanning {len(tickers)} tickers - strategy: {strategy}\n")
     scanner = NasdaqScanner()
     results = scanner.scan(tickers=tickers, strategy=strategy, verbose=True)
 
@@ -299,7 +299,7 @@ def run_analysis(
     top = results[:top_n]
     strat_label = "Short-Term" if strategy == "short_term" else "Long-Term"
     print(f"\n\n{DOUBLE_SEP}")
-    print(f"  TOP {top_n} {strat_label.upper()} OPPORTUNITIES — DETAILED REPORTS")
+    print(f"  TOP {top_n} {strat_label.upper()} OPPORTUNITIES - DETAILED REPORTS")
     print(DOUBLE_SEP)
 
     for rank, result in enumerate(top, start=1):
@@ -310,7 +310,7 @@ def run_analysis(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="NASDAQ Trading Analysis Tool — data-driven buy/hold/sell signals",
+        description="NASDAQ Trading Analysis Tool - data-driven buy/hold/sell signals",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -405,14 +405,14 @@ def main() -> None:
             print(f"\n  Top {args.top} SHORT-TERM opportunities:")
             for i, r in enumerate(st_res[:args.top], 1):
                 price_str = f"${r.price:.2f}" if r.price else "N/A"
-                print(f"    {i}. {r.symbol:<6} — {_colour_rec(r.recommendation):<14} "
+                print(f"    {i}. {r.symbol:<6} - {_colour_rec(r.recommendation):<14} "
                       f"Score: {r.final_score:.1f}   Price: {price_str}")
 
         if lt_res:
             print(f"\n  Top {args.top} LONG-TERM opportunities:")
             for i, r in enumerate(lt_res[:args.top], 1):
                 price_str = f"${r.price:.2f}" if r.price else "N/A"
-                print(f"    {i}. {r.symbol:<6} — {_colour_rec(r.recommendation):<14} "
+                print(f"    {i}. {r.symbol:<6} - {_colour_rec(r.recommendation):<14} "
                       f"Score: {r.final_score:.1f}   Price: {price_str}")
 
     _print_disclaimer()

@@ -8,13 +8,13 @@ export function cn(...inputs: ClassValue[]) {
 
 /** Format a dollar amount. */
 export function formatPrice(price?: number | null): string {
-  if (price == null) return "—";
+  if (price == null) return "-";
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(price);
 }
 
 /** Format a percentage. */
 export function formatPct(val?: number | null, decimals = 1): string {
-  if (val == null) return "—";
+  if (val == null) return "-";
   return `${(val * 100).toFixed(decimals)}%`;
 }
 

@@ -1,5 +1,5 @@
 """
-data/fetcher.py — Stock price and fundamental data fetching via yfinance.
+data/fetcher.py - Stock price and fundamental data fetching via yfinance.
 
 Provides a lightweight caching layer so that each yfinance.Ticker object is
 created only once per session, and repeated calls for the same symbol are cheap.

@@ -6,16 +6,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart2, TrendingUp, MessageSquare, Zap, Shield,
   RefreshCw, ArrowRight, ChevronRight, ChevronDown, Check,
-  Brain, Clock, Globe, BookOpen,
+  Brain, Clock, Globe, BookOpen, LineChart, Target,
 } from "lucide-react";
 import type { BlogPost }  from "@/lib/blog-posts";
 
-/* ── Data ──────────────────────────────────────────────────────────────────── */
+/* Data */
 const FEATURES = [
   {
     icon: BarChart2, color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20",
     title: "Technical Analysis",
-    desc:  "RSI, MACD, Bollinger Bands, moving averages, volume confirmation, and support/resistance levels — all weighted into a single actionable score.",
+    desc:  "RSI, MACD, Bollinger Bands, moving averages, volume confirmation, and support/resistance - all weighted into a single actionable score.",
   },
   {
     icon: TrendingUp, color: "text-violet-400", bg: "bg-violet-500/10 border-violet-500/20",
@@ -25,7 +25,7 @@ const FEATURES = [
   {
     icon: MessageSquare, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20",
     title: "Sentiment Analysis",
-    desc:  "Real-time financial news scored with a finance-tuned NLP model covering 70+ domain-specific terms — from earnings beats to analyst upgrades.",
+    desc:  "Real-time financial news scored with a finance-tuned NLP model covering 70+ domain-specific terms - from earnings beats to analyst upgrades.",
   },
 ];
 
@@ -37,35 +37,98 @@ const STATS = [
 ];
 
 const HOW_IT_WORKS = [
-  { step: "01", title: "Enter a Ticker",     desc: "Type any NASDAQ symbol (e.g. AAPL, NVDA) or click 'Scan Market' to automatically find the best opportunities."          },
-  { step: "02", title: "Choose a Strategy",  desc: "Select short-term (days to weeks, heavier on technicals) or long-term (months to years, heavier on fundamentals)."        },
-  { step: "03", title: "Get Your Signals",   desc: "Receive a 0–100 score, a color-coded recommendation, an interactive price chart, and plain-English reasoning in seconds." },
+  {
+    step: "01", title: "Enter a Ticker",
+    desc: "Type any NASDAQ symbol (e.g. AAPL, NVDA) or click 'Scan Market' to automatically surface the strongest opportunities.",
+  },
+  {
+    step: "02", title: "Choose a Strategy",
+    desc: "Short-term weights RSI and MACD for near-term trades. Long-term weights trend regression and fundamentals for sustainable positions.",
+  },
+  {
+    step: "03", title: "Read the Signals",
+    desc: "Get a 0-100 score, a color-coded recommendation, an interactive price chart, and plain-English reasoning in seconds.",
+  },
 ];
 
 const DIFFERENTIATORS = [
-  { icon: Brain,     title: "Multi-Factor AI",       desc: "Three independent analysis pillars — no single indicator dominates. Reduces false signals."           },
-  { icon: Globe,     title: "Real-Time Data",         desc: "Price data, fundamentals, and news fetched live from Yahoo Finance and financial news APIs."          },
-  { icon: Clock,     title: "Instant Results",        desc: "Results cached for one hour. First analysis in seconds, subsequent calls are instant."               },
-  { icon: Shield,    title: "Transparent Reasoning",  desc: "Every recommendation comes with bullet-point explanations. You see exactly why a score was assigned." },
-  { icon: Zap,       title: "No Account Required",    desc: "Start analysing immediately. No sign-up, no credit card, no barriers."                              },
-  { icon: BarChart2, title: "60+ NASDAQ Stocks",      desc: "Covers mega-cap tech, semiconductors, cloud, biotech, fintech, and international ADRs."              },
+  {
+    icon: Brain,     title: "Multi-Factor Scoring",
+    desc: "Three independent analysis pillars - no single indicator dominates. Reduces false signals and improves conviction.",
+  },
+  {
+    icon: Globe,     title: "Live Market Data",
+    desc: "Price data, fundamentals, and news fetched directly from Yahoo Finance and financial news APIs on every request.",
+  },
+  {
+    icon: Clock,     title: "Fast Results",
+    desc: "Results cached for one hour. First analysis takes seconds; repeat calls are instant.",
+  },
+  {
+    icon: Shield,    title: "Transparent Reasoning",
+    desc: "Every recommendation includes plain-English bullet points. You see exactly which signals drove the score.",
+  },
+  {
+    icon: Zap,       title: "No Account Required",
+    desc: "Start analysing immediately. No sign-up, no credit card, no barriers.",
+  },
+  {
+    icon: BarChart2, title: "60+ NASDAQ Stocks",
+    desc: "Covers mega-cap tech, semiconductors, cloud, biotech, fintech, and international ADRs.",
+  },
 ];
 
 const FOR_WHO = [
-  { title: "Retail Investors",         desc: "Get institutional-grade analysis without paying for expensive research subscriptions."  },
-  { title: "Day & Swing Traders",      desc: "Quickly scan for high-probability setups using combined technical and momentum signals." },
-  { title: "Long-Term Investors",      desc: "Evaluate stocks on fundamentals, risk-adjusted returns, and trend sustainability."      },
-  { title: "Finance Students",         desc: "Learn how real analytical frameworks work with live market data and transparent scoring." },
+  {
+    title: "Retail Investors",
+    desc: "Get data-driven analysis without paying for expensive research subscriptions.",
+  },
+  {
+    title: "Day and Swing Traders",
+    desc: "Quickly scan for high-probability setups using combined technical and momentum signals.",
+  },
+  {
+    title: "Long-Term Investors",
+    desc: "Evaluate stocks on fundamentals, risk-adjusted returns, and trend sustainability.",
+  },
+  {
+    title: "Finance Students",
+    desc: "Learn how analytical frameworks work with live market data and transparent scoring.",
+  },
 ];
 
-/* ── FAQ Item ────────────────────────────────────────────────────────────── */
+/* Strategy comparison section */
+const STRATEGY_COMPARE = [
+  {
+    icon: Zap, label: "Short-Term", color: "text-blue-400", border: "border-blue-500/25", bg: "bg-blue-500/5",
+    timeframe: "Days to weeks",
+    pillars:   [
+      { name: "Technical", weight: "50%", focus: "RSI (35%), MACD (35%)" },
+      { name: "Sentiment", weight: "30%", focus: "Recent news spikes"    },
+      { name: "Quant",     weight: "20%", focus: "Momentum (55%)"        },
+    ],
+    best: "Traders watching price momentum and near-term catalysts.",
+  },
+  {
+    icon: LineChart, label: "Long-Term", color: "text-violet-400", border: "border-violet-500/25", bg: "bg-violet-500/5",
+    timeframe: "Months to years",
+    pillars:   [
+      { name: "Quant",     weight: "45%", focus: "Trend (35%), Sharpe (30%)" },
+      { name: "Technical", weight: "30%", focus: "Trend MAs (45%)"           },
+      { name: "Sentiment", weight: "25%", focus: "Sustained coverage"         },
+    ],
+    best: "Investors building positions based on quality and durability.",
+  },
+];
+
+/* FAQ Item */
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="glass-card overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left gap-4"
+        className="w-full flex items-center justify-between px-5 py-4 text-left gap-4 hover:bg-bg-hover/30 transition-colors"
         aria-expanded={open}
       >
         <span className="font-semibold text-sm sm:text-base">{question}</span>
@@ -90,12 +153,12 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   );
 }
 
-/* ── Blog card ───────────────────────────────────────────────────────────── */
+/* Blog card */
 function BlogCard({ post }: { post: BlogPost }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="glass-card p-5 hover:border-brand/40 transition-colors group block"
+      className="glass-card p-5 hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand/5 transition-all duration-200 group block"
     >
       <span className="text-xs font-semibold text-brand-light bg-brand/10 px-2 py-0.5 rounded-full">
         {post.category}
@@ -114,7 +177,7 @@ function BlogCard({ post }: { post: BlogPost }) {
   );
 }
 
-/* ── Main component ──────────────────────────────────────────────────────── */
+/* Main component */
 interface LandingPageContentProps {
   faqs:        { question: string; answer: string }[];
   recentPosts: BlogPost[];
@@ -124,7 +187,7 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
   return (
     <div className="flex flex-col items-center">
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
+      {/* HERO */}
       <section
         aria-labelledby="hero-heading"
         className="relative w-full flex flex-col items-center text-center px-4 pt-28 pb-24 overflow-hidden"
@@ -133,30 +196,27 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
 
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-4xl">
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-light bg-brand/10 border border-brand/25 rounded-full px-3 py-1 mb-6">
-            <Zap size={11} className="fill-brand-light" />
-            AI-Powered Analysis · Real-Time Data · Free to Use
+            <Target size={11} className="fill-brand-light" />
+            Multi-Factor Analysis &middot; Live Data &middot; Free to Use
           </span>
 
           <h1 id="hero-heading" className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6">
-            AI-Powered Stock Analysis
+            Data-Driven Stock Analysis
             <br />
-            <span className="gradient-text">for Smarter Investing</span>
+            <span className="gradient-text">for Serious Investors</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Make data-driven decisions using technical indicators, quantitative models, and real-time
-            news sentiment — combined into one clear buy, hold, or sell recommendation.
+            Combine technical indicators, quantitative models, and real-time news sentiment
+            into one clear buy, hold, or sell recommendation. No fluff, no guesswork.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/dashboard" className="btn-primary flex items-center justify-center gap-2 text-base">
-              Get Started Free <ArrowRight size={16} />
+              Start Analysing <ArrowRight size={16} />
             </Link>
-            <Link
-              href="/dashboard?mode=scan"
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border border-bg-border text-slate-300 hover:text-white hover:border-brand/50 transition-all duration-200 text-base font-semibold"
-            >
-              View Demo <ChevronRight size={16} />
+            <Link href="/dashboard?mode=scan" className="btn-ghost text-base">
+              Scan the Market <ChevronRight size={16} />
             </Link>
           </div>
         </motion.div>
@@ -175,11 +235,11 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
         </motion.div>
       </section>
 
-      {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
+      {/* HOW IT WORKS */}
       <section aria-labelledby="how-heading" className="w-full max-w-6xl px-4 pb-24">
-        <h2 id="how-heading" className="text-center text-3xl font-bold mb-4">How It Works</h2>
+        <h2 id="how-heading" className="text-center text-3xl font-bold mb-4 tracking-tight">How It Works</h2>
         <p className="text-center text-slate-400 text-sm mb-12 max-w-xl mx-auto">
-          StockPulse AI runs a three-stage analysis pipeline in seconds — no sign-up required.
+          A three-stage analysis pipeline runs in seconds. No sign-up required.
         </p>
         <div className="grid sm:grid-cols-3 gap-8">
           {HOW_IT_WORKS.map((step, i) => (
@@ -189,7 +249,7 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
               viewport={{ once: true }} transition={{ delay: i * 0.12 }}
               className="flex flex-col items-center text-center"
             >
-              <span className="text-5xl font-black gradient-text mb-4 opacity-60">{step.step}</span>
+              <span className="text-5xl font-black gradient-text mb-4 opacity-50">{step.step}</span>
               <h3 className="font-bold text-lg mb-2">{step.title}</h3>
               <p className="text-sm text-slate-400 leading-relaxed">{step.desc}</p>
             </motion.div>
@@ -197,12 +257,12 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
         </div>
       </section>
 
-      {/* ── THREE PILLARS ─────────────────────────────────────────────────── */}
+      {/* THREE PILLARS */}
       <section aria-labelledby="pillars-heading" className="w-full max-w-6xl px-4 pb-24">
-        <h2 id="pillars-heading" className="text-center text-3xl font-bold mb-4">Three Pillars of Stock Analysis</h2>
+        <h2 id="pillars-heading" className="text-center text-3xl font-bold mb-4 tracking-tight">Three Independent Pillars</h2>
         <p className="text-center text-slate-400 text-sm mb-12 max-w-2xl mx-auto">
-          Most tools rely on a single data source. StockPulse AI fuses three independent analysis frameworks
-          to reduce false signals and deliver higher-conviction recommendations.
+          Most tools rely on a single data source. StockPulse fuses three independent frameworks
+          to reduce false signals and improve recommendation quality.
         </p>
         <div className="grid sm:grid-cols-3 gap-6">
           {FEATURES.map((f, i) => (
@@ -210,7 +270,7 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
               key={f.title}
               initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-              className="glass-card p-6 hover:border-brand/40 transition-colors duration-300"
+              className="glass-card p-6 hover:border-brand/40 hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className={`inline-flex p-3 rounded-xl border ${f.bg} mb-4`}>
                 <f.icon size={22} className={f.color} />
@@ -222,11 +282,53 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
         </div>
       </section>
 
-      {/* ── WHY WE'RE DIFFERENT ───────────────────────────────────────────── */}
+      {/* STRATEGY COMPARISON */}
+      <section aria-labelledby="strategy-heading" className="w-full max-w-6xl px-4 pb-24">
+        <h2 id="strategy-heading" className="text-center text-3xl font-bold mb-4 tracking-tight">Two Distinct Strategies</h2>
+        <p className="text-center text-slate-400 text-sm mb-12 max-w-2xl mx-auto">
+          Short-term and long-term modes use different internal weights so the same stock
+          produces genuinely different scores depending on your time horizon.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-6">
+          {STRATEGY_COMPARE.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ delay: i * 0.12 }}
+              className={`glass-card p-6 border ${s.border} ${s.bg}`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-2 rounded-lg bg-bg-card border ${s.border}`}>
+                  <s.icon size={18} className={s.color} />
+                </div>
+                <div>
+                  <h3 className={`font-bold text-lg ${s.color}`}>{s.label}</h3>
+                  <p className="text-xs text-slate-500">{s.timeframe}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 mb-4">
+                {s.pillars.map((p) => (
+                  <div key={p.name} className="flex items-start gap-2">
+                    <span className="text-xs font-bold text-slate-400 w-20 shrink-0 pt-0.5">{p.name} {p.weight}</span>
+                    <span className="text-xs text-slate-500 leading-relaxed">{p.focus}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-slate-400 border-t border-bg-border pt-3 mt-3">
+                <span className="font-semibold text-slate-300">Best for:</span> {s.best}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* WHY WE'RE DIFFERENT */}
       <section aria-labelledby="why-heading" className="w-full max-w-6xl px-4 pb-24">
-        <h2 id="why-heading" className="text-center text-3xl font-bold mb-4">Why StockPulse AI?</h2>
+        <h2 id="why-heading" className="text-center text-3xl font-bold mb-4 tracking-tight">Why StockPulse?</h2>
         <p className="text-center text-slate-400 text-sm mb-12 max-w-xl mx-auto">
-          We built the stock analysis tool we always wanted — transparent, fast, multi-factor, and free.
+          Built for investors who want clear signals, not marketing promises.
         </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {DIFFERENTIATORS.map((d, i) => (
@@ -234,7 +336,7 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
               key={d.title}
               initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ delay: i * 0.07 }}
-              className="glass-card p-5 hover:border-brand/30 transition-colors"
+              className="glass-card p-5 hover:border-brand/30 hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="flex items-center gap-3 mb-2">
                 <d.icon size={16} className="text-brand-light shrink-0" />
@@ -246,16 +348,16 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
         </div>
       </section>
 
-      {/* ── WHO IT'S FOR ──────────────────────────────────────────────────── */}
+      {/* WHO IT'S FOR */}
       <section aria-labelledby="for-heading" className="w-full max-w-6xl px-4 pb-24">
-        <h2 id="for-heading" className="text-center text-3xl font-bold mb-12">Built for Every Investor</h2>
+        <h2 id="for-heading" className="text-center text-3xl font-bold mb-12 tracking-tight">Built for Every Investor</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {FOR_WHO.map((w, i) => (
             <motion.div
               key={w.title}
               initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-              className="glass-card p-5 text-center"
+              className="glass-card p-5 text-center hover:border-brand/30 hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="w-8 h-8 rounded-lg bg-brand/15 border border-brand/25 flex items-center justify-center mx-auto mb-3">
                 <Check size={14} className="text-brand-light" />
@@ -267,25 +369,25 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
         </div>
       </section>
 
-      {/* ── PRODUCT PREVIEW / CTA BANNER ─────────────────────────────────── */}
+      {/* CTA BANNER */}
       <section aria-labelledby="cta-heading" className="w-full max-w-6xl px-4 pb-24">
         <motion.div
           initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass-card p-8 sm:p-12 bg-card-glow text-center"
+          className="glass-card p-8 sm:p-12 bg-card-glow text-center border-brand/20"
         >
-          <h2 id="cta-heading" className="text-3xl font-extrabold mb-4">
-            Analyse Any NASDAQ Stock — <span className="gradient-text">Right Now</span>
+          <h2 id="cta-heading" className="text-3xl font-extrabold mb-4 tracking-tight">
+            Analyse Any NASDAQ Stock <span className="gradient-text">Right Now</span>
           </h2>
           <p className="text-slate-400 text-sm max-w-lg mx-auto mb-8">
             No account. No credit card. Enter a ticker and get a full technical, quantitative, and
-            sentiment analysis with a clear buy/hold/sell signal in under 10 seconds.
+            sentiment breakdown with a clear buy, hold, or sell signal in under 10 seconds.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/dashboard" className="btn-primary flex items-center justify-center gap-2 text-base">
-              Launch the Tool <ArrowRight size={16} />
+              Open the Dashboard <ArrowRight size={16} />
             </Link>
-            <Link href="/pricing" className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border border-bg-border text-slate-300 hover:text-white hover:border-brand/50 transition-all duration-200 text-base font-semibold">
+            <Link href="/pricing" className="btn-ghost text-base">
               View Pricing <ChevronRight size={16} />
             </Link>
           </div>
@@ -297,9 +399,9 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
         </motion.div>
       </section>
 
-      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+      {/* FAQ */}
       <section aria-labelledby="faq-heading" className="w-full max-w-3xl px-4 pb-24">
-        <h2 id="faq-heading" className="text-center text-3xl font-bold mb-12">Frequently Asked Questions</h2>
+        <h2 id="faq-heading" className="text-center text-3xl font-bold mb-12 tracking-tight">Frequently Asked Questions</h2>
         <div className="space-y-3">
           {faqs.map((f) => (
             <FAQItem key={f.question} question={f.question} answer={f.answer} />
@@ -307,10 +409,10 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
         </div>
       </section>
 
-      {/* ── BLOG PREVIEW ─────────────────────────────────────────────────── */}
+      {/* BLOG PREVIEW */}
       <section aria-labelledby="blog-heading" className="w-full max-w-6xl px-4 pb-24">
         <div className="flex items-center justify-between mb-8">
-          <h2 id="blog-heading" className="text-2xl font-bold">From the Blog</h2>
+          <h2 id="blog-heading" className="text-2xl font-bold tracking-tight">From the Blog</h2>
           <Link href="/blog" className="flex items-center gap-1.5 text-sm text-brand-light hover:text-brand font-semibold transition-colors">
             <BookOpen size={14} /> All Articles <ChevronRight size={13} />
           </Link>
@@ -322,7 +424,7 @@ export function LandingPageContent({ faqs, recentPosts }: LandingPageContentProp
         </div>
       </section>
 
-      {/* ── DISCLAIMER ────────────────────────────────────────────────────── */}
+      {/* DISCLAIMER */}
       <section className="w-full max-w-6xl px-4 pb-16">
         <div className="glass-card border-amber-500/20 bg-amber-500/5 p-5 text-center">
           <p className="text-xs text-amber-200/70 leading-relaxed">

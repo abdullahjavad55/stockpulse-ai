@@ -5,7 +5,7 @@ import { buildMetadata }     from "@/lib/seo";
 import { BLOG_POSTS }        from "@/lib/blog-posts";
 
 export const metadata: Metadata = buildMetadata({
-  title:       "Stock Analysis Blog — Guides, Tips & Strategies | StockPulse AI",
+  title:       "Stock Analysis Blog  - Guides, Tips & Strategies | StockPulse AI",
   description: "Learn how to analyze stocks, use technical indicators, and understand market sentiment. Free beginner-friendly guides from the StockPulse AI team.",
   path:        "/blog",
   keywords:    ["stock analysis blog", "technical analysis guide", "how to invest stocks", "stock market tips"],
@@ -22,7 +22,7 @@ export default function BlogIndexPage() {
         </div>
         <h1 className="text-4xl font-extrabold mb-4">Stock Analysis Blog</h1>
         <p className="text-slate-400 text-base max-w-xl mx-auto">
-          Practical guides on technical analysis, quantitative methods, and market sentiment — written
+          Practical guides on technical analysis, quantitative methods, and market sentiment  - written
           for investors at every level.
         </p>
       </header>

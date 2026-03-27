@@ -1,11 +1,11 @@
 """
-api_server.py — FastAPI backend for the Trading Analysis SaaS.
+api_server.py - FastAPI backend for the Trading Analysis SaaS.
 
 Endpoints:
-  GET  /health              — liveness probe
-  POST /analyze             — single-ticker analysis
-  GET  /scan                — scan top NASDAQ picks
-  GET  /tickers             — return the curated NASDAQ universe
+  GET  /health              - liveness probe
+  POST /analyze             - single-ticker analysis
+  GET  /scan                - scan top NASDAQ picks
+  GET  /tickers             - return the curated NASDAQ universe
 
 Results are cached in-memory with a 1-hour TTL so repeated calls
 are instant without hitting external APIs again.

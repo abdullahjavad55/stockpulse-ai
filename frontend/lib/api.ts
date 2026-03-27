@@ -1,5 +1,5 @@
 /**
- * lib/api.ts — Typed client for the FastAPI backend.
+ * lib/api.ts - Typed client for the FastAPI backend.
  *
  * Set NEXT_PUBLIC_API_URL in .env.local to point at your deployed backend.
  * Defaults to http://localhost:8000 for local development.

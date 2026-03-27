@@ -165,7 +165,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
           <BookOpen size={20} className="text-brand-light mx-auto mb-3" />
           <h2 className="font-bold text-lg mb-2">Apply These Insights with StockPulse AI</h2>
           <p className="text-sm text-slate-400 mb-5">
-            Analyse any NASDAQ stock using technical indicators, quantitative models, and news sentiment — for free.
+            Analyse any NASDAQ stock using technical indicators, quantitative models, and news sentiment  - for free.
           </p>
           <Link href="/dashboard" className="btn-primary inline-flex items-center gap-2">
             Try the Free Tool <ArrowRight size={15} />

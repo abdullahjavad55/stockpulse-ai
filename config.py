@@ -1,5 +1,5 @@
 """
-config.py — Central configuration for the NASDAQ Trading Analysis Tool.
+config.py - Central configuration for the NASDAQ Trading Analysis Tool.
 
 All tunable parameters, API keys, and stock lists live here so that
 nothing is hardcoded in the business-logic modules.
@@ -63,7 +63,7 @@ BB_STD      = 2.0
 
 # ── NASDAQ Universe to scan ───────────────────────────────────────────────────
 # Curated list of large-/mid-cap NASDAQ-listed equities.
-# Adjust freely — no tickers are ever hardcoded as picks.
+# Adjust freely - no tickers are ever hardcoded as picks.
 NASDAQ_UNIVERSE = [
     # Mega-cap tech
     "AAPL", "MSFT", "NVDA", "AMZN", "META", "GOOGL", "TSLA", "AVGO",

@@ -1,12 +1,16 @@
 """
-decision_engine/engine.py — Weighted scoring model and recommendation engine.
+decision_engine/engine.py - Weighted scoring model and recommendation engine.
 
 Combines Technical, Quantitative, and Sentiment pillar scores into one
-final score (0–100) and maps it to a five-level recommendation.
+final score (0-100) and maps it to a five-level recommendation.
 
-Strategy modes adjust pillar weights:
-  short_term  : Technical 50 % / Quant 20 % / Sentiment 30 %
-  long_term   : Technical 30 % / Quant 45 % / Sentiment 25 %
+Strategy modes adjust BOTH pillar weights AND internal component weights:
+  short_term: Technical 50% / Quant 20% / Sentiment 30%
+              Tech internals: RSI+MACD heavy (momentum focus)
+              Quant internals: momentum heavy (recent price action)
+  long_term:  Technical 30% / Quant 45% / Sentiment 25%
+              Tech internals: trend+MA heavy (stability focus)
+              Quant internals: trend+fundamentals heavy (long-run quality)
 """
 
 import logging
@@ -109,10 +113,10 @@ class DecisionEngine:
         weights = config.WEIGHTS.get(strategy, config.WEIGHTS["short_term"])
 
         try:
-            # 1. Fetch price history
-            period = config.LONG_TERM_PERIOD if strategy == "long_term" else config.PRICE_HISTORY_PERIOD
-            df = self._data_fetcher.get_price_history(symbol, period=period)
-            if df is None or df.empty:
+            # 1. Always fetch 2 years of data so SMA-200 and long-term metrics are available.
+            #    We then slice for short-term windows internally.
+            df_full = self._data_fetcher.get_price_history(symbol, period=config.LONG_TERM_PERIOD)
+            if df_full is None or df_full.empty:
                 result.error = f"No price data available for {symbol}"
                 logger.warning(result.error)
                 return result
@@ -121,16 +125,26 @@ class DecisionEngine:
             fundamentals = self._data_fetcher.get_fundamentals(symbol)
             result.fundamentals = fundamentals
             result.name         = fundamentals.get("name") or symbol
-            result.price        = fundamentals.get("price") or (float(df["Close"].iloc[-1]) if not df.empty else None)
+            result.price        = fundamentals.get("price") or float(df_full["Close"].iloc[-1])
 
             # 3. Technical analysis
-            tech_result          = self._tech_analyzer.analyze(df)
+            #    Short-term: feed only the last 90 trading days so RSI/MACD/BB are computed
+            #    on recent price action. SMA-200 will be NaN (skipped gracefully).
+            #    Long-term: full 2-year history so all MAs and trend MAs are meaningful.
+            if strategy == "short_term" and len(df_full) > 90:
+                df_tech = df_full.tail(90).copy()
+            else:
+                df_tech = df_full
+            tech_result             = self._tech_analyzer.analyze(df_tech, strategy=strategy)
             result.technical_score  = tech_result["score"]
             result.technical_signals= tech_result["signals"]
             result.indicators       = tech_result["indicators"]
 
             # 4. Quantitative analysis
-            quant_result         = self._quant_analyzer.analyze(df, fundamentals, benchmark_df)
+            #    Always pass the full 2-year df so multi-timeframe momentum (1m/3m/6m) can
+            #    be computed.  The analyzer itself uses a 63-day slice internally for
+            #    short-term Sharpe / trend / volatility, and the full window for long-term.
+            quant_result            = self._quant_analyzer.analyze(df_full, fundamentals, benchmark_df, strategy=strategy)
             result.quant_score      = quant_result["score"]
             result.quant_signals    = quant_result["signals"]
             result.metrics          = quant_result["metrics"]
@@ -157,6 +171,16 @@ class DecisionEngine:
 
             # 8. Build reasoning narrative
             result.reasoning = self._build_reasoning(result)
+
+            # Debug logging - score breakdown
+            logger.info(
+                "[ENGINE][%s] %s | Tech=%.2f(w=%.0f%%) Quant=%.2f(w=%.0f%%) Sent=%.2f(w=%.0f%%) -> Final=%.2f (%s)",
+                strategy, symbol,
+                result.technical_score,  weights["technical"]  * 100,
+                result.quant_score,      weights["quant"]      * 100,
+                result.sentiment_score,  weights["sentiment"]  * 100,
+                result.final_score, result.recommendation,
+            )
 
         except Exception as exc:
             logger.exception("Analysis failed for %s: %s", symbol, exc)

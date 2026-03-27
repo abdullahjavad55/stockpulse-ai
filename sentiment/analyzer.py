@@ -1,5 +1,5 @@
 """
-sentiment/analyzer.py — Financial news sentiment analysis using VADER.
+sentiment/analyzer.py - Financial news sentiment analysis using VADER.
 
 VADER (Valence Aware Dictionary and sEntiment Reasoner) is purpose-built
 for short, social-media-style text and generalises well to financial
@@ -124,7 +124,7 @@ class SentimentAnalyzer:
                 "positive_pct":  0.0,
                 "negative_pct":  0.0,
                 "themes":        [],
-                "signals":       ["No news data available — sentiment score set to neutral"],
+                "signals":       ["No news data available - sentiment score set to neutral"],
             }
 
         scores_compound: List[float] = []
@@ -230,7 +230,7 @@ class SentimentAnalyzer:
 
         if compound >= 0.35:
             signals.append(
-                f"Strong positive news sentiment (avg compound: {compound:+.2f}) — "
+                f"Strong positive news sentiment (avg compound: {compound:+.2f}) - "
                 f"{pos_count}/{n} articles bullish"
             )
         elif compound >= 0.10:
@@ -239,7 +239,7 @@ class SentimentAnalyzer:
             )
         elif compound <= -0.35:
             signals.append(
-                f"Strong negative news sentiment (avg compound: {compound:+.2f}) — "
+                f"Strong negative news sentiment (avg compound: {compound:+.2f}) - "
                 f"{neg_count}/{n} articles bearish"
             )
         elif compound <= -0.10:

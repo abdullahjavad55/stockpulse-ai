@@ -4,7 +4,7 @@ import { Check, Zap, ArrowRight, Star } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title:       "Pricing — StockPulse AI Stock Analysis Tool",
+  title:       "Pricing - StockPulse AI Stock Analysis Tool",
   description: "Simple, transparent pricing for StockPulse AI. Start free, upgrade when you're ready. Monthly, 6-month, and annual plans available.",
   path:        "/pricing",
   keywords:    ["stock analysis pricing", "stock tool subscription", "NASDAQ analysis plans"],
@@ -148,7 +148,7 @@ export default function PricingPage() {
           highlighted={false}
         />
         <PlanCard
-          name="Pro — Monthly"
+          name="Pro - Monthly"
           price="$30"
           period="month"
           badge="Most Popular"
@@ -160,10 +160,10 @@ export default function PricingPage() {
           comingSoon
         />
         <PlanCard
-          name="Pro — Annual"
+          name="Pro - Annual"
           price="$20"
           period="month"
-          savings="Billed $240/year — Save 33%"
+          savings="Billed $240/year - Save 33%"
           badge="Best Value"
           badgeColor="bg-emerald-500 text-white"
           features={ANNUAL_EXTRAS}
@@ -177,9 +177,9 @@ export default function PricingPage() {
       {/* 6-month option */}
       <div className="glass-card p-6 mb-16 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <p className="font-bold text-base">6-Month Plan — Best of Both Worlds</p>
+          <p className="font-bold text-base">6-Month Plan - Best of Both Worlds</p>
           <p className="text-sm text-slate-400 mt-1">
-            Pay for 6 months at <strong className="text-white">$25/month</strong> ($150 total) — save 17% vs monthly.
+            Pay for 6 months at <strong className="text-white">$25/month</strong> ($150 total) - save 17% vs monthly.
             Ideal if you want to try Pro for half a year.
           </p>
         </div>
@@ -215,18 +215,18 @@ export default function PricingPage() {
                 ["Bullet-point reasoning",           true,  true  ],
                 ["Market scans per day",             "5",   "Unlimited"],
                 ["Stocks in scan universe",          "20",  "58+"    ],
-                ["Portfolio tracking",               "—",   "Up to unlimited"],
-                ["Email alerts",                     "—",   true  ],
-                ["CSV export",                       "—",   true  ],
-                ["API access",                       "—",   "Annual only"],
+                ["Portfolio tracking",               "-",   "Up to unlimited"],
+                ["Email alerts",                     "-",   true  ],
+                ["CSV export",                       "-",   true  ],
+                ["API access",                       "-",   "Annual only"],
               ].map(([feature, free, pro]) => (
                 <tr key={String(feature)} className="hover:bg-bg-hover/50">
                   <td className="p-4 text-slate-300">{feature}</td>
                   <td className="p-4 text-center text-slate-400">
-                    {free === true ? <Check size={15} className="text-emerald-400 mx-auto" /> : free === false ? <span className="text-slate-600">—</span> : free}
+                    {free === true ? <Check size={15} className="text-emerald-400 mx-auto" /> : free === false ? <span className="text-slate-600">-</span> : free}
                   </td>
                   <td className="p-4 text-center">
-                    {pro === true ? <Check size={15} className="text-emerald-400 mx-auto" /> : pro === false ? <span className="text-slate-600">—</span> : <span className="text-brand-light font-semibold">{pro}</span>}
+                    {pro === true ? <Check size={15} className="text-emerald-400 mx-auto" /> : pro === false ? <span className="text-slate-600">-</span> : <span className="text-brand-light font-semibold">{pro}</span>}
                   </td>
                 </tr>
               ))}
@@ -240,8 +240,8 @@ export default function PricingPage() {
         <h2 id="pricing-faq-heading" className="text-2xl font-bold text-center mb-8">Pricing FAQ</h2>
         <div className="grid sm:grid-cols-2 gap-5 max-w-4xl mx-auto">
           {[
-            { q: "When will Pro launch?",      a: "Pro tier is currently in development. Join the waitlist by using the free tool — early users will get discounted pricing." },
-            { q: "Is the free plan really free?", a: "Yes, permanently. The core analysis tool — single-stock analysis and limited market scans — will always be free to use." },
+            { q: "When will Pro launch?",      a: "Pro tier is currently in development. Join the waitlist by using the free tool - early users will get discounted pricing." },
+            { q: "Is the free plan really free?", a: "Yes, permanently. The core analysis tool - single-stock analysis and limited market scans - will always be free to use." },
             { q: "Will you charge for existing features?", a: "No. Features already available in the free tier will remain free when Pro launches." },
             { q: "What payment methods will you accept?", a: "We plan to support all major credit/debit cards and PayPal. Crypto payment may be added in a later phase." },
           ].map(({ q, a }) => (
@@ -266,7 +266,7 @@ export default function PricingPage() {
           <Zap size={15} /> Launch Free Tool <ArrowRight size={15} />
         </Link>
         <p className="text-xs text-slate-600 mt-4">
-          ⚠️ This tool provides data-driven insights for educational purposes only — not financial advice.
+          ⚠️ This tool provides data-driven insights for educational purposes only - not financial advice.
         </p>
       </div>
     </div>

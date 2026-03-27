@@ -1,5 +1,5 @@
 """
-scanner/nasdaq_scanner.py — Batch scan of NASDAQ stocks.
+scanner/nasdaq_scanner.py - Batch scan of NASDAQ stocks.
 
 The scanner iterates a list of tickers, runs DecisionEngine.analyze() on
 each one, and returns ranked results for short-term and long-term strategies.

@@ -3,14 +3,17 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Radio, RotateCcw, AlertCircle, Clock, Bookmark } from "lucide-react";
+import {
+  Search, Radio, RotateCcw, AlertCircle, Clock, Bookmark,
+  TrendingUp, BarChart2, Zap, LineChart,
+} from "lucide-react";
 
 import { analyzeStock, scanMarket, type AnalysisResult, type ScanResult } from "@/lib/api";
-import { ResultCard } from "@/components/ResultCard";
-import { ScannerResults } from "@/components/ScannerResults";
-import { LoadingState } from "@/components/LoadingState";
+import { ResultCard }      from "@/components/ResultCard";
+import { ScannerResults }  from "@/components/ScannerResults";
+import { LoadingState }    from "@/components/LoadingState";
 
-/* ── Recent tickers (localStorage) ─────────────────────────────────────────── */
+/* Recent tickers (localStorage) */
 function useRecent() {
   const [recent, setRecent] = useState<string[]>([]);
   useEffect(() => {
@@ -29,7 +32,7 @@ function useRecent() {
   return { recent, push };
 }
 
-/* ── Daily scan limit (localStorage) ────────────────────────────────────────── */
+/* Daily scan limit (localStorage) */
 const DAILY_LIMIT = 5;
 function useDailyLimit() {
   const [count, setCount] = useState(0);
@@ -52,8 +55,25 @@ function useDailyLimit() {
   return { count, remaining, increment };
 }
 
-/* ── Strategy selector ──────────────────────────────────────────────────────── */
+/* Strategy selector */
 type Strategy = "short_term" | "long_term";
+
+const STRATEGY_CONFIG = {
+  short_term: {
+    label:    "Short-Term",
+    focus:    "RSI, MACD, momentum signals",
+    icon:     Zap,
+    timeframe:"Days to weeks",
+    desc:     "Momentum-focused. Weights RSI and MACD heavily to identify near-term price moves.",
+  },
+  long_term: {
+    label:    "Long-Term",
+    focus:    "Trend, fundamentals, stability",
+    icon:     LineChart,
+    timeframe:"Months to years",
+    desc:     "Stability-focused. Weights trend regression and fundamentals to find quality compounders.",
+  },
+} as const;
 
 function StrategyToggle({
   value,
@@ -63,25 +83,36 @@ function StrategyToggle({
   onChange: (v: Strategy) => void;
 }) {
   return (
-    <div className="inline-flex rounded-xl border border-bg-border overflow-hidden">
-      {(["short_term", "long_term"] as const).map((s) => (
-        <button
-          key={s}
-          onClick={() => onChange(s)}
-          className={`px-5 py-2 text-sm font-semibold transition-all duration-200 ${
-            value === s
-              ? "bg-brand text-white"
-              : "text-slate-400 hover:text-white hover:bg-bg-hover"
-          }`}
-        >
-          {s === "short_term" ? "Short-Term" : "Long-Term"}
-        </button>
-      ))}
+    <div className="flex flex-col gap-2">
+      <div className="inline-flex rounded-xl border border-bg-border overflow-hidden bg-bg-card">
+        {(["short_term", "long_term"] as const).map((s) => {
+          const cfg  = STRATEGY_CONFIG[s];
+          const Icon = cfg.icon;
+          return (
+            <button
+              key={s}
+              onClick={() => onChange(s)}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                value === s
+                  ? "bg-brand text-white shadow-lg shadow-brand/30"
+                  : "text-slate-400 hover:text-white hover:bg-bg-hover"
+              }`}
+            >
+              <Icon size={13} />
+              {cfg.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-xs text-slate-500 px-1">
+        <span className="text-slate-400 font-medium">{STRATEGY_CONFIG[value].timeframe}.</span>{" "}
+        {STRATEGY_CONFIG[value].desc}
+      </p>
     </div>
   );
 }
 
-/* ── Main dashboard ─────────────────────────────────────────────────────────── */
+/* Main dashboard */
 function DashboardContent() {
   const searchParams = useSearchParams();
   const initialMode  = searchParams.get("mode") === "scan" ? "scan" : "analyze";
@@ -94,7 +125,7 @@ function DashboardContent() {
   const [result,   setResult]   = useState<AnalysisResult | null>(null);
   const [scanData, setScanData] = useState<ScanResult | null>(null);
 
-  const { recent, push } = useRecent();
+  const { recent, push }    = useRecent();
   const { remaining, increment } = useDailyLimit();
 
   const handleAnalyze = useCallback(
@@ -138,113 +169,116 @@ function DashboardContent() {
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold mb-1">Dashboard</h1>
+        <h1 className="text-3xl font-extrabold mb-1 tracking-tight">Dashboard</h1>
         <p className="text-slate-400 text-sm">
-          Enter a ticker or run the market scanner to get AI-powered insights.
+          Enter a ticker or scan the market to get data-driven buy, hold, or sell signals.
         </p>
       </div>
 
       {/* Mode tabs */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => setMode("analyze")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-            mode === "analyze"
-              ? "bg-brand/20 text-brand-light border border-brand/40"
-              : "text-slate-400 hover:text-white border border-transparent"
-          }`}
-        >
-          <Search size={15} /> Analyze Stock
-        </button>
-        <button
-          onClick={() => { setMode("scan"); setScanData(null); setResult(null); }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-            mode === "scan"
-              ? "bg-brand/20 text-brand-light border border-brand/40"
-              : "text-slate-400 hover:text-white border border-transparent"
-          }`}
-        >
-          <Radio size={15} /> Scan Market
-        </button>
+      <div className="flex items-center gap-2 mb-6">
+        {([
+          { id: "analyze", label: "Analyze Stock", icon: Search },
+          { id: "scan",    label: "Scan Market",   icon: Radio  },
+        ] as const).map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => { setMode(id); if (id === "scan") { setScanData(null); setResult(null); }}}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
+              mode === id
+                ? "bg-brand/15 text-brand-light border border-brand/35 shadow-sm shadow-brand/10"
+                : "text-slate-400 hover:text-white border border-transparent hover:border-bg-border"
+            }`}
+          >
+            <Icon size={14} /> {label}
+          </button>
+        ))}
       </div>
 
       {/* Control panel */}
-      <div className="glass-card p-5 mb-8">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          {/* Ticker input (only in analyze mode) */}
-          {mode === "analyze" && (
-            <div className="relative flex-1">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input
-                type="text"
-                value={ticker}
-                onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-                placeholder="Ticker symbol (e.g. AAPL, NVDA)"
-                className="input-field pl-10 font-mono"
-                maxLength={10}
-              />
+      <div className="glass-card p-5 mb-8 border-bg-border/80">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-start">
+            {/* Ticker input */}
+            {mode === "analyze" && (
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={ticker}
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+                  placeholder="Ticker symbol (e.g. AAPL, NVDA)"
+                  className="input-field pl-10 font-mono"
+                  maxLength={10}
+                />
+              </div>
+            )}
+
+            {/* Action button */}
+            <div className="flex items-start gap-3">
+              {mode === "analyze" ? (
+                <button
+                  onClick={() => handleAnalyze()}
+                  disabled={loading || !ticker.trim()}
+                  className="btn-primary flex items-center gap-2 whitespace-nowrap"
+                >
+                  {loading ? (
+                    <><RotateCcw size={14} className="animate-spin" /> Analysing...</>
+                  ) : (
+                    <><Search size={14} /> Analyse</>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleScan}
+                  disabled={loading || remaining === 0}
+                  className="btn-primary flex items-center gap-2 whitespace-nowrap"
+                >
+                  {loading ? (
+                    <><RotateCcw size={14} className="animate-spin" /> Scanning...</>
+                  ) : (
+                    <><Radio size={14} /> Scan Now</>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Strategy selector */}
+          <div className="border-t border-bg-border pt-4">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Analysis Strategy</p>
+            <StrategyToggle value={strategy} onChange={setStrategy} />
+          </div>
+
+          {/* Recent tickers */}
+          {mode === "analyze" && recent.length > 0 && (
+            <div className="border-t border-bg-border pt-3 flex flex-wrap gap-2">
+              <span className="flex items-center gap-1 text-xs text-slate-500 self-center">
+                <Bookmark size={11} /> Recent:
+              </span>
+              {recent.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => { setTicker(t); handleAnalyze(t); }}
+                  className="text-xs font-mono px-2.5 py-1 rounded-lg bg-bg-hover border border-bg-border text-slate-300 hover:border-brand/50 hover:text-brand-light transition-all"
+                >
+                  {t}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Strategy toggle */}
-          <StrategyToggle value={strategy} onChange={setStrategy} />
-
-          {/* Action button */}
-          {mode === "analyze" ? (
-            <button
-              onClick={() => handleAnalyze()}
-              disabled={loading || !ticker.trim()}
-              className="btn-primary flex items-center gap-2 whitespace-nowrap"
-            >
-              {loading ? (
-                <><RotateCcw size={14} className="animate-spin" /> Analysing…</>
-              ) : (
-                <><Search size={14} /> Analyse</>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={handleScan}
-              disabled={loading || remaining === 0}
-              className="btn-primary flex items-center gap-2 whitespace-nowrap"
-            >
-              {loading ? (
-                <><RotateCcw size={14} className="animate-spin" /> Scanning…</>
-              ) : (
-                <><Radio size={14} /> Scan Now</>
-              )}
-            </button>
+          {/* Scan limit badge */}
+          {mode === "scan" && (
+            <p className="text-xs text-slate-500 flex items-center gap-1.5 border-t border-bg-border pt-3">
+              <Clock size={11} />
+              {remaining > 0
+                ? `${remaining} scan${remaining !== 1 ? "s" : ""} remaining today`
+                : "Daily limit reached - resets at midnight"}
+            </p>
           )}
         </div>
-
-        {/* Recent tickers */}
-        {mode === "analyze" && recent.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="flex items-center gap-1 text-xs text-slate-500">
-              <Bookmark size={11} /> Recent:
-            </span>
-            {recent.map((t) => (
-              <button
-                key={t}
-                onClick={() => { setTicker(t); handleAnalyze(t); }}
-                className="text-xs font-mono px-2 py-1 rounded-lg bg-bg-hover border border-bg-border text-slate-300 hover:border-brand/50 hover:text-brand-light transition-all"
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Scan limit badge */}
-        {mode === "scan" && (
-          <p className="mt-3 text-xs text-slate-500 flex items-center gap-1">
-            <Clock size={11} />
-            {remaining > 0
-              ? `${remaining} scan${remaining !== 1 ? "s" : ""} remaining today`
-              : "Daily limit reached — resets at midnight"}
-          </p>
-        )}
       </div>
 
       {/* Error */}
@@ -265,10 +299,11 @@ function DashboardContent() {
       {/* Loading */}
       {loading && (
         <LoadingState
+          strategy={strategy}
           message={
             mode === "scan"
-              ? "Scanning 20 NASDAQ stocks — this can take up to 60 s on first run…"
-              : `Analysing ${ticker}…`
+              ? "Scanning 20 NASDAQ stocks - this can take up to 60 s on first run..."
+              : `Analysing ${ticker}...`
           }
         />
       )}
@@ -293,7 +328,10 @@ function DashboardContent() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            <ScannerResults data={scanData} onSelect={(sym) => { setMode("analyze"); setTicker(sym); handleAnalyze(sym); }} />
+            <ScannerResults
+              data={scanData}
+              onSelect={(sym) => { setMode("analyze"); setTicker(sym); handleAnalyze(sym); }}
+            />
           </motion.div>
         )}
       </AnimatePresence>

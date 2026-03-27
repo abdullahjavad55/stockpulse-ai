@@ -1,14 +1,18 @@
 """
-analysis/quantitative.py — Quantitative / mathematical analysis.
+analysis/quantitative.py - Quantitative / mathematical analysis.
 
 Metrics:
-  • Annualised volatility (σ of daily log-returns × √252)
-  • Sharpe Ratio  (annualised excess return / σ)
-  • Beta          (vs QQQ as NASDAQ proxy; from fundamentals if unavailable)
-  • Linear-regression trend (slope of log-price over trailing window)
-  • Momentum score (multi-timeframe: 1m / 3m / 6m returns)
-  • Composite Risk Score
-  • Quant Score (0–100)
+  - Annualised volatility (sigma of daily log-returns x sqrt(252))
+  - Sharpe Ratio  (annualised excess return / sigma)
+  - Beta          (vs QQQ as NASDAQ proxy; from fundamentals if unavailable)
+  - Linear-regression trend (slope of log-price over trailing window)
+  - Momentum score (multi-timeframe: 1m / 3m / 6m returns)
+  - Composite Risk Score
+  - Quant Score (0-100)
+
+Strategy-aware weights:
+  short_term: Sharpe 10%, Trend 5%, Momentum 55%, Volatility 15%, Fundamentals 5%, Risk 10%
+  long_term:  Sharpe 30%, Trend 35%, Momentum 5%, Volatility 5%, Fundamentals 20%, Risk 5%
 """
 
 import logging
@@ -21,6 +25,26 @@ from scipy import stats
 import config
 
 logger = logging.getLogger(__name__)
+
+# Component weights per strategy
+QUANT_WEIGHTS = {
+    "short_term": {
+        "sharpe":       0.10,
+        "trend":        0.05,
+        "momentum":     0.55,
+        "volatility":   0.15,
+        "fundamentals": 0.05,
+        "risk":         0.10,
+    },
+    "long_term": {
+        "sharpe":       0.30,
+        "trend":        0.35,
+        "momentum":     0.05,
+        "volatility":   0.05,
+        "fundamentals": 0.20,
+        "risk":         0.05,
+    },
+}
 
 
 class QuantitativeAnalyzer:
@@ -36,19 +60,21 @@ class QuantitativeAnalyzer:
         df: pd.DataFrame,
         fundamentals: Dict[str, Any],
         benchmark_df: Optional[pd.DataFrame] = None,
+        strategy: str = "short_term",
     ) -> Dict[str, Any]:
         """
         Parameters
         ----------
         df           : OHLCV DataFrame (1-year daily by default).
         fundamentals : dict from StockDataFetcher.get_fundamentals().
-        benchmark_df : Optional OHLCV for benchmark (e.g. QQQ).  If None,
+        benchmark_df : Optional OHLCV for benchmark (e.g. QQQ). If None,
                        beta from fundamentals is used.
+        strategy     : "short_term" or "long_term"; controls internal component weights.
 
         Returns dict with keys:
-          metrics  – all computed values
-          score    – Quant Score (0–100)
-          signals  – human-readable signal strings
+          metrics  - all computed values
+          score    - Quant Score (0-100)
+          signals  - human-readable signal strings
         """
         if df is None or len(df) < 30:
             return {"metrics": {}, "score": 50.0, "signals": ["Insufficient data for quant analysis"]}
@@ -56,17 +82,36 @@ class QuantitativeAnalyzer:
         metrics: Dict[str, Any] = {}
         signals: List[str]      = []
 
-        # ── Core calculations ─────────────────────────────────────────────────
-        self._calc_returns(df, metrics)
+        # Select component weights based on strategy
+        weights = QUANT_WEIGHTS.get(strategy, QUANT_WEIGHTS["short_term"])
+
+        # Choose the calculation window:
+        #   short_term -> last 63 trading days (~3 months)
+        #   long_term  -> full history (2 years)
+        # Using a short window for short-term means Sharpe, trend, and volatility
+        # reflect RECENT price action rather than the long-run average.
+        # This is what makes a stock with a strong 2-year trend but a recent 3-month
+        # pullback score very differently between the two strategies.
+        SHORT_WINDOW = 63
+        if strategy == "short_term" and len(df) > SHORT_WINDOW:
+            df_window = df.tail(SHORT_WINDOW).copy()
+        else:
+            df_window = df
+
+        # Core calculations:
+        # - Sharpe / volatility / trend -> use df_window (strategy-specific time-frame)
+        # - Momentum                    -> always use full df for 1m / 3m / 6m lookbacks
+        # - Beta                        -> full df (needs alignment with benchmark)
+        self._calc_returns(df_window, metrics)
         self._calc_volatility(metrics)
         self._calc_sharpe(metrics)
-        self._calc_beta(df, benchmark_df, fundamentals, metrics)
-        self._calc_trend(df, metrics)
-        self._calc_momentum(df, metrics)
+        self._calc_beta(df, benchmark_df, fundamentals, metrics)   # full df
+        self._calc_trend(df_window, metrics)
+        self._calc_momentum(df, metrics)                            # full df
         self._calc_fundamentals_score(fundamentals, metrics)
         self._calc_risk_score(metrics)
 
-        # ── Score each component ──────────────────────────────────────────────
+        # Score each component
         score_sharpe,    sig_sharpe   = self._score_sharpe(metrics)
         score_trend,     sig_trend    = self._score_trend(metrics)
         score_momentum,  sig_momentum = self._score_momentum(metrics)
@@ -77,24 +122,32 @@ class QuantitativeAnalyzer:
         for sig_list in [sig_sharpe, sig_trend, sig_momentum, sig_vol, sig_fund, sig_risk]:
             signals.extend(sig_list)
 
+        # Strategy-aware weighted composite score
         weighted = (
-            score_sharpe   * 0.25 +
-            score_trend    * 0.20 +
-            score_momentum * 0.20 +
-            score_vol      * 0.10 +
-            score_fund     * 0.15 +
-            score_risk     * 0.10
+            score_sharpe   * weights["sharpe"]       +
+            score_trend    * weights["trend"]         +
+            score_momentum * weights["momentum"]      +
+            score_vol      * weights["volatility"]    +
+            score_fund     * weights["fundamentals"]  +
+            score_risk     * weights["risk"]
         )
         score = float(np.clip(weighted, 0, 100))
 
         metrics["component_scores"] = {
-            "sharpe":      round(score_sharpe,   2),
-            "trend":       round(score_trend,    2),
-            "momentum":    round(score_momentum, 2),
-            "volatility":  round(score_vol,      2),
-            "fundamentals":round(score_fund,     2),
-            "risk":        round(score_risk,     2),
+            "sharpe":       round(score_sharpe,   2),
+            "trend":        round(score_trend,    2),
+            "momentum":     round(score_momentum, 2),
+            "volatility":   round(score_vol,      2),
+            "fundamentals": round(score_fund,     2),
+            "risk":         round(score_risk,     2),
         }
+
+        window_days = len(df_window)
+        logger.info(
+            "[QUANT][%s][window=%dd] Sharpe=%.1f Trend=%.1f Mom=%.1f Vol=%.1f Fund=%.1f Risk=%.1f -> Score=%.2f",
+            strategy, window_days,
+            score_sharpe, score_trend, score_momentum, score_vol, score_fund, score_risk, score,
+        )
 
         return {"metrics": metrics, "score": round(score, 2), "signals": signals}
 
@@ -235,22 +288,22 @@ class QuantitativeAnalyzer:
 
         if sharpe > 2.0:
             score = 90.0
-            signals.append(f"Sharpe Ratio = {sharpe:.2f} — excellent risk-adjusted return")
+            signals.append(f"Sharpe Ratio = {sharpe:.2f} - excellent risk-adjusted return")
         elif sharpe > 1.0:
             score = 72.0
-            signals.append(f"Sharpe Ratio = {sharpe:.2f} — good risk-adjusted return")
+            signals.append(f"Sharpe Ratio = {sharpe:.2f} - good risk-adjusted return")
         elif sharpe > 0.5:
             score = 58.0
-            signals.append(f"Sharpe Ratio = {sharpe:.2f} — acceptable risk-adjusted return")
+            signals.append(f"Sharpe Ratio = {sharpe:.2f} - acceptable risk-adjusted return")
         elif sharpe > 0:
             score = 48.0
-            signals.append(f"Sharpe Ratio = {sharpe:.2f} — marginal risk-adjusted return")
+            signals.append(f"Sharpe Ratio = {sharpe:.2f} - marginal risk-adjusted return")
         elif sharpe > -0.5:
             score = 35.0
-            signals.append(f"Sharpe Ratio = {sharpe:.2f} — negative risk-adjusted return")
+            signals.append(f"Sharpe Ratio = {sharpe:.2f} - negative risk-adjusted return")
         else:
             score = 18.0
-            signals.append(f"Sharpe Ratio = {sharpe:.2f} — poor risk-adjusted return")
+            signals.append(f"Sharpe Ratio = {sharpe:.2f} - poor risk-adjusted return")
 
         return score, signals
 
@@ -317,16 +370,16 @@ class QuantitativeAnalyzer:
         # Lower volatility → higher score for quant purposes
         if vol < 0.15:
             score = 70.0
-            signals.append(f"Low volatility: {vol:.1%} annualised — stable price action")
+            signals.append(f"Low volatility: {vol:.1%} annualised - stable price action")
         elif vol < 0.30:
             score = 58.0
             signals.append(f"Moderate volatility: {vol:.1%} annualised")
         elif vol < 0.50:
             score = 42.0
-            signals.append(f"High volatility: {vol:.1%} annualised — elevated risk")
+            signals.append(f"High volatility: {vol:.1%} annualised - elevated risk")
         else:
             score = 25.0
-            signals.append(f"Very high volatility: {vol:.1%} annualised — significant risk")
+            signals.append(f"Very high volatility: {vol:.1%} annualised - significant risk")
 
         return score, signals
 
@@ -342,35 +395,35 @@ class QuantitativeAnalyzer:
 
         if pe is not None:
             if 0 < pe < 15:
-                score += 10; signals.append(f"P/E = {pe:.1f} — value territory")
+                score += 10; signals.append(f"P/E = {pe:.1f} - value territory")
             elif 15 <= pe < 30:
-                score += 5;  signals.append(f"P/E = {pe:.1f} — fair value")
+                score += 5;  signals.append(f"P/E = {pe:.1f} - fair value")
             elif pe >= 30:
-                score -= 5;  signals.append(f"P/E = {pe:.1f} — growth premium")
+                score -= 5;  signals.append(f"P/E = {pe:.1f} - growth premium")
             elif pe < 0:
-                score -= 5;  signals.append(f"P/E = {pe:.1f} — negative earnings")
+                score -= 5;  signals.append(f"P/E = {pe:.1f} - negative earnings")
 
         if roe is not None:
             if roe > 0.20:
-                score += 10; signals.append(f"ROE = {roe:.1%} — high return on equity")
+                score += 10; signals.append(f"ROE = {roe:.1%} - high return on equity")
             elif roe > 0.10:
-                score += 5;  signals.append(f"ROE = {roe:.1%} — solid return on equity")
+                score += 5;  signals.append(f"ROE = {roe:.1%} - solid return on equity")
             elif roe < 0:
-                score -= 8;  signals.append(f"ROE = {roe:.1%} — negative return on equity")
+                score -= 8;  signals.append(f"ROE = {roe:.1%} - negative return on equity")
 
         if rev is not None:
             if rev > 0.20:
-                score += 10; signals.append(f"Revenue growth = {rev:.1%} — strong growth")
+                score += 10; signals.append(f"Revenue growth = {rev:.1%} - strong growth")
             elif rev > 0.05:
-                score += 5;  signals.append(f"Revenue growth = {rev:.1%} — moderate growth")
+                score += 5;  signals.append(f"Revenue growth = {rev:.1%} - moderate growth")
             elif rev < 0:
-                score -= 8;  signals.append(f"Revenue growth = {rev:.1%} — declining revenue")
+                score -= 8;  signals.append(f"Revenue growth = {rev:.1%} - declining revenue")
 
         if de is not None:
             if de < 0.5:
-                score += 5;  signals.append(f"Debt/Equity = {de:.2f} — low leverage")
+                score += 5;  signals.append(f"Debt/Equity = {de:.2f} - low leverage")
             elif de > 2.0:
-                score -= 5;  signals.append(f"Debt/Equity = {de:.2f} — high leverage")
+                score -= 5;  signals.append(f"Debt/Equity = {de:.2f} - high leverage")
 
         return float(np.clip(score, 0, 100)), signals
 
@@ -384,13 +437,13 @@ class QuantitativeAnalyzer:
 
         if beta is not None:
             if beta < 0.8:
-                signals.append(f"Beta = {beta:.2f} — defensive stock (low market sensitivity)")
+                signals.append(f"Beta = {beta:.2f} - defensive stock (low market sensitivity)")
             elif beta < 1.2:
-                signals.append(f"Beta = {beta:.2f} — market-neutral sensitivity")
+                signals.append(f"Beta = {beta:.2f} - market-neutral sensitivity")
             elif beta < 1.8:
-                signals.append(f"Beta = {beta:.2f} — higher market sensitivity (amplified moves)")
+                signals.append(f"Beta = {beta:.2f} - higher market sensitivity (amplified moves)")
             else:
-                signals.append(f"Beta = {beta:.2f} — highly aggressive (strong market amplifier)")
+                signals.append(f"Beta = {beta:.2f} - highly aggressive (strong market amplifier)")
         else:
             signals.append("Beta not available")
 

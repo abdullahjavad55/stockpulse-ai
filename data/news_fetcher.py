@@ -1,5 +1,5 @@
 """
-data/news_fetcher.py — Multi-source financial news retrieval.
+data/news_fetcher.py - Multi-source financial news retrieval.
 
 Priority order (highest quality first):
   1. Finnhub Company News API  (requires FINNHUB_API_KEY)
