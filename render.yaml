@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: trading-analysis-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt && python -c "import nltk; nltk.download('vader_lexicon'); nltk.download('stopwords'); nltk.download('punkt')"
+    startCommand: uvicorn api_server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: NEWS_API_KEY
+        sync: false
+      - key: FINNHUB_API_KEY
+        sync: false
+      - key: RISK_FREE_RATE
+        value: "0.05"
+    healthCheckPath: /health
